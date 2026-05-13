@@ -1,0 +1,4446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>固体内核融合 文献探索ハーネス — 監査ダッシュボード 2026-05-14</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e13;
+  --bg-card: #14171e;
+  --bg-card-hover: #1a1e28;
+  --bg-original: #1a1c14;
+  --bg-extraction: #141a1e;
+  --bg-interpretation: #1e141a;
+  --bg-human: #0e1a14;
+  --border: #2a2e38;
+  --border-accent: #3a3e4a;
+  --text: #d8dce6;
+  --text-dim: #8a8e9a;
+  --text-label: #6a7080;
+  --accent-blue: #4a9eff;
+  --accent-green: #3ad49a;
+  --accent-yellow: #f0c040;
+  --accent-orange: #e08040;
+  --accent-red: #e04050;
+  --accent-purple: #9070e0;
+  --accent-cyan: #40c8e0;
+  --L5: #3ad49a;
+  --L4: #4a9eff;
+  --L3: #f0c040;
+  --L2: #e08040;
+  --L1: #e04050;
+  --L0: #666;
+  --flag-bg: rgba(224, 64, 80, 0.12);
+  --flag-border: rgba(224, 64, 80, 0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 0;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: linear-gradient(180deg, #10131a 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 2rem 2.5rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.header h1 span {
+  color: var(--accent-cyan);
+  font-weight: 300;
+}
+
+.header-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.04);
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* ===== STATS BAR ===== */
+.stats-bar {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ===== FILTERS ===== */
+.filter-bar {
+  padding: 1rem 2.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: rgba(20, 23, 30, 0.8);
+}
+
+.filter-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-btn:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.filter-btn.active {
+  background: rgba(74, 158, 255, 0.12);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.filter-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 0 0.3rem;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  padding: 2rem 2.5rem;
+  max-width: 1400px;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== SOURCE CARD ===== */
+.source-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.source-card:hover {
+  border-color: var(--border-accent);
+}
+
+.card-header {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+}
+
+.reliability-indicator {
+  width: 5px;
+  flex-shrink: 0;
+}
+
+.reliability-L5 .reliability-indicator { background: var(--L5); }
+.reliability-L4 .reliability-indicator { background: var(--L4); }
+.reliability-L3 .reliability-indicator { background: var(--L3); }
+.reliability-L2 .reliability-indicator { background: var(--L2); }
+.reliability-L1 .reliability-indicator { background: var(--L1); }
+.reliability-L0 .reliability-indicator { background: var(--L0); }
+
+.card-header-content {
+  flex: 1;
+  padding: 1rem 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-title-area {
+  flex: 1;
+}
+
+.source-id {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.source-title {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 0.4rem;
+}
+
+.source-meta {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.source-meta a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+.source-meta a:hover {
+  text-decoration: underline;
+}
+
+.card-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.badge-reliability {
+  border: 1px solid;
+  font-size: 0.6rem;
+}
+
+.badge-L5 { color: var(--L5); border-color: var(--L5); background: rgba(58,212,154,0.08); }
+.badge-L4 { color: var(--L4); border-color: var(--L4); background: rgba(74,158,255,0.08); }
+.badge-L3 { color: var(--L3); border-color: var(--L3); background: rgba(240,192,64,0.08); }
+.badge-L2 { color: var(--L2); border-color: var(--L2); background: rgba(224,128,64,0.08); }
+.badge-L1 { color: var(--L1); border-color: var(--L1); background: rgba(224,64,80,0.08); }
+.badge-L0 { color: var(--L0); border-color: var(--L0); background: rgba(102,102,102,0.08); }
+
+.badge-hypothesis {
+  color: var(--accent-purple);
+  border: 1px solid rgba(144,112,224,0.3);
+  background: rgba(144,112,224,0.08);
+}
+
+.badge-status {
+  color: var(--accent-yellow);
+  border: 1px solid rgba(240,192,64,0.3);
+  background: rgba(240,192,64,0.08);
+}
+
+.badge-status.reviewed {
+  color: var(--accent-green);
+  border-color: rgba(58,212,154,0.3);
+  background: rgba(58,212,154,0.08);
+}
+
+/* ===== LAYER TAGS ===== */
+.layer-labels {
+  padding: 0.6rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,0.01);
+}
+
+.layer-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  background: rgba(64,200,224,0.08);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(64,200,224,0.15);
+  letter-spacing: 0.04em;
+}
+
+/* ===== CONTENT SECTIONS ===== */
+.card-body {
+  padding: 0;
+}
+
+.content-section {
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid rgba(42,46,56,0.5);
+}
+
+.content-section:last-child {
+  border-bottom: none;
+}
+
+.section-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.section-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.section-original { background: var(--bg-original); }
+.section-original .section-dot { background: #8a9a3a; }
+.section-original .section-name { color: #8a9a3a; }
+
+.original-quote {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid #8a9a3a;
+  background: rgba(138,154,58,0.04);
+  margin-top: 0.3rem;
+  line-height: 1.8;
+}
+
+.page-ref {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.3rem;
+}
+
+.section-extraction { background: var(--bg-extraction); }
+.section-extraction .section-dot { background: var(--accent-blue); }
+.section-extraction .section-name { color: var(--accent-blue); }
+
+.extraction-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.section-interpretation { background: var(--bg-interpretation); }
+.section-interpretation .section-dot { background: var(--accent-purple); }
+.section-interpretation .section-name { color: var(--accent-purple); }
+
+.interpretation-text {
+  font-size: 0.85rem;
+  color: #c0a0d0;
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.section-human { background: var(--bg-human); }
+.section-human .section-dot { background: var(--accent-green); }
+.section-human .section-name { color: var(--accent-green); }
+
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.review-action-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.review-action-btn:hover {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.review-action-btn.selected {
+  background: rgba(58,212,154,0.12);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+/* ===== FLAGS ===== */
+.flags-section {
+  padding: 0.6rem 1.2rem;
+  background: var(--flag-bg);
+  border-bottom: 1px solid var(--flag-border);
+}
+
+.flag-item {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent-red);
+  padding: 0.15rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.flag-icon {
+  font-size: 0.6rem;
+}
+
+/* ===== FIGURE CARD ===== */
+.figure-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+}
+
+.figure-placeholder {
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.figure-meta {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.figure-meta dt {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0.4rem;
+}
+
+.figure-meta dd {
+  margin-left: 0;
+  color: var(--text);
+}
+
+/* ===== CLAIM TABLE ===== */
+.claim-table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.claim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.claim-table th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  padding: 0.6rem 0.8rem;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.claim-table td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(42,46,56,0.5);
+  vertical-align: top;
+}
+
+.claim-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.claim-id {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.support-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+}
+
+.support-A { background: rgba(58,212,154,0.15); color: var(--accent-green); }
+.support-B { background: rgba(74,158,255,0.15); color: var(--accent-blue); }
+.support-C { background: rgba(240,192,64,0.15); color: var(--accent-yellow); }
+.support-D { background: rgba(224,128,64,0.15); color: var(--accent-orange); }
+.support-X { background: rgba(102,102,102,0.15); color: #888; }
+
+/* ===== NEXT ACTIONS ===== */
+.next-actions {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  margin-top: 2rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(42,46,56,0.3);
+}
+
+.action-item:last-child {
+  border-bottom: none;
+}
+
+.action-priority {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.priority-high   { background: rgba(224,64,80,0.15);  color: var(--accent-red); }
+.priority-medium { background: rgba(240,192,64,0.15); color: var(--accent-yellow); }
+.priority-low    { background: rgba(74,158,255,0.15); color: var(--accent-blue); }
+
+.action-text {
+  font-size: 0.82rem;
+}
+
+/* ===== LEGEND ===== */
+.legend {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.legend-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.8rem;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.legend-section h4 {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 0.15rem 0;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ===== POLICY REMINDER ===== */
+.policy-reminder {
+  margin-top: 3rem;
+  padding: 1rem 1.2rem;
+  background: rgba(224,64,80,0.06);
+  border: 1px solid rgba(224,64,80,0.15);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* ===== ACCESS SECTION ===== */
+.access-section {
+  padding: 0.6rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.access-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.access-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
+.access-confirmed {
+  color: var(--accent-green);
+  background: rgba(58,212,154,0.10);
+  border: 1px solid rgba(58,212,154,0.25);
+}
+
+.access-pending {
+  color: var(--accent-yellow);
+  background: rgba(240,192,64,0.10);
+  border: 1px solid rgba(240,192,64,0.25);
+}
+
+.access-url-label {
+  color: var(--accent-blue);
+  background: rgba(74,158,255,0.10);
+  border: 1px solid rgba(74,158,255,0.25);
+}
+
+.access-local-label {
+  color: var(--accent-cyan);
+  background: rgba(64,200,224,0.10);
+  border: 1px solid rgba(64,200,224,0.25);
+}
+
+.access-missing {
+  color: var(--accent-red);
+  background: rgba(224,64,80,0.10);
+  border: 1px solid rgba(224,64,80,0.25);
+}
+
+.access-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.access-link:hover {
+  color: var(--accent-blue);
+  text-decoration: underline;
+}
+
+.access-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+.access-flag-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent-red);
+  margin-left: 0.3rem;
+}
+
+/* ===== NO DATA ===== */
+.no-data {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ===== COLLAPSIBLE ===== */
+details {
+  border: none;
+}
+
+details summary {
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 0.3rem 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+details summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+  font-size: 0.6rem;
+}
+
+details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .header, .filter-bar, .main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .card-header-content {
+    flex-direction: column;
+  }
+  .card-badges {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== NETWORK DIAGRAM ===== */
+.network-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.5rem 0 1.5rem;
+}
+
+.network-svg-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 0.5rem;
+}
+
+.net-node-primary_ni   { fill: rgba(58,212,154,0.10); stroke: #3ad49a; }
+.net-node-fe_context_only { fill: rgba(224,64,80,0.10); stroke: #e04050; }
+.net-node-ni_dft_reference { fill: rgba(74,158,255,0.10); stroke: #4a9eff; }
+.net-node-claims_cluster { fill: rgba(64,200,224,0.10); stroke: #40c8e0; }
+
+.net-label-id { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; }
+.net-label-authors { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 11px; fill: #8a8e9a; }
+.net-label-role { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 10.5px; }
+.net-edge-label { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 10px; }
+
+/* ===== FE VS NI COMPARISON TABLE ===== */
+.comparison-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem 1.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.comparison-table th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+
+.comparison-table th.col-fe  { color: var(--accent-red);   border-bottom-color: var(--accent-red); }
+.comparison-table th.col-ni  { color: var(--accent-green); border-bottom-color: var(--accent-green); }
+
+.comparison-table td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(42,46,56,0.4);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.comparison-table td.col-dim { color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
+.comparison-table td.col-fe  { color: #e8a0a8; }
+.comparison-table td.col-ni  { color: #80e0b8; }
+
+.comparison-table tr:last-child td { border-bottom: none; }
+
+.dq11-badge {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  background: rgba(144,112,224,0.12);
+  border: 1px solid rgba(144,112,224,0.3);
+  color: var(--accent-purple);
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="header-top">
+    <h1>固体内核融合 文献探索ハーネス <span>— 監査ダッシュボード</span></h1>
+    <div class="header-date">2026-05-14 — Daily Review</div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-value" style="color:var(--accent-cyan)">25</span>
+      <span class="stat-label">新規資料</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" style="color:var(--accent-yellow)">0</span>
+      <span class="stat-label">要チェック</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" style="color:var(--accent-green)">1</span>
+      <span class="stat-label">詳細抽出済</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" style="color:var(--accent-red)">25</span>
+      <span class="stat-label">危険フラグ</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" style="color:var(--accent-purple)">9</span>
+      <span class="stat-label">Claim抽出</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FILTER BAR ===== -->
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterCards('all', this)">すべて</button>
+  <button class="filter-btn" onclick="filterCards('needs_review', this)">要チェック</button>
+  <button class="filter-btn" onclick="filterCards('flagged', this)">危険フラグ</button>
+  <div class="filter-divider"></div>
+  
+  <button class="filter-btn" onclick="filterCards('L5', this)">L5</button>
+  
+  <button class="filter-btn" onclick="filterCards('L4', this)">L4</button>
+  
+  <button class="filter-btn" onclick="filterCards('L3', this)">L3</button>
+  
+  <button class="filter-btn" onclick="filterCards('L2', this)">L2</button>
+  
+  <button class="filter-btn" onclick="filterCards('L1', this)">L1</button>
+  
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-title">凡例 — 色分けルール</div>
+  <div class="legend-grid">
+    <div class="legend-section">
+      <h4>情報階層（背景色で区別）</h4>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--bg-original)"></div> 原文引用 — 原本からの直接引用</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--bg-extraction)"></div> AI抽出 — 構造化データの抽出結果</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--bg-interpretation)"></div> AI解釈 — Claudeによる解釈・推論</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--bg-human)"></div> 人間レビュー — 研究者の判断欄</div>
+    </div>
+    <div class="legend-section">
+      <h4>信憑性レベル（左端の色帯）</h4>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--L5)"></div> L5 — 査読済・再現性あり・複数研究で支持</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--L4)"></div> L4 — 査読済・データあり・再現性/解釈に限定あり</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--L3)"></div> L3 — 査読済or信頼できる技術資料・参考価値あり</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--L2)"></div> L2 — プレプリント・特許・会議資料</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--L1)"></div> L1 — 未査読・仮説中心・出典不明瞭</div>
+    </div>
+    <div class="legend-section">
+      <h4>Claim Support（主張の根拠強度）</h4>
+      <div class="legend-item"><span class="support-badge support-A">A</span> 実験データあり・方法確認可能</div>
+      <div class="legend-item"><span class="support-badge support-B">B</span> 計算・モデル・既存文献に基づく</div>
+      <div class="legend-item"><span class="support-badge support-C">C</span> 理論的推測が中心</div>
+      <div class="legend-item"><span class="support-badge support-D">D</span> 著者の主張のみ</div>
+      <div class="legend-item"><span class="support-badge support-X">X</span> 根拠未確認</div>
+    </div>
+    <div class="legend-section">
+      <h4>仮説依存度</h4>
+      <div class="legend-item"><span class="badge badge-hypothesis">H0</span> 標準物理・化学の範囲</div>
+      <div class="legend-item"><span class="badge badge-hypothesis">H1</span> 標準理論の拡張・解釈</div>
+      <div class="legend-item"><span class="badge badge-hypothesis">H2</span> 未確定仮説を一部使用</div>
+      <div class="legend-item"><span class="badge badge-hypothesis">H3</span> 特殊仮説への依存が大きい</div>
+      <div class="legend-item"><span class="badge badge-hypothesis">H4</span> 仮説が崩れると主張全体が崩壊</div>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCE CARDS -->
+<div class="section-title">新規資料 — 2026-05-14</div>
+
+
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0001</div>
+        <div class="source-title">First-principles study of the insertion and diffusion of interstitial atoms (H, C, N and O) in nickel</div>
+        <div class="source-meta">
+          <span>David, M., Prillieux, A., Monceau, D., Connétable, D. (2020)</span>
+          <span>Journal of Alloys and Compounds</span>
+          
+          <span><a href="https://doi.org/10.1016/j.jallcom.2019.153555" target="_blank">DOI: 10.1016/j.jallcom.2019.153555</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2019.153555" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2019.153555</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2019.153555" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2019.153555</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0002</div>
+        <div class="source-title">First-principles study of the atomic volume of hydrogen in palladium</div>
+        <div class="source-meta">
+          <span>Setayandeh, S.S., Gould, T., Vaez, A., McLennan, K., Armanet, N., Gray, E. (2021)</span>
+          <span>Journal of Alloys and Compounds</span>
+          
+          <span><a href="https://doi.org/10.1016/j.jallcom.2021.158713" target="_blank">DOI: 10.1016/j.jallcom.2021.158713</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2021.158713" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2021.158713</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2021.158713" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2021.158713</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0003</div>
+        <div class="source-title">A systematic error in mass flow calorimetry demonstrated</div>
+        <div class="source-meta">
+          <span>Shanahan, K.L. (2002)</span>
+          <span>Thermochimica Acta</span>
+          
+          <span><a href="https://doi.org/10.1016/s0040-6031(01)00832-2" target="_blank">DOI: 10.1016/s0040-6031(01)00832-2</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L11</span>
+    
+    <span class="layer-tag">LAYER_11 代替説明</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/s0040-6031(01)00832-2" target="_blank" class="access-link">https://doi.org/10.1016/s0040-6031(01)00832-2</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/s0040-6031(01)00832-2" target="_blank" class="access-link">https://doi.org/10.1016/s0040-6031(01)00832-2</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0004</div>
+        <div class="source-title">Temperature-dependent diffusion coefficients from ab initio computations: Hydrogen, deuterium, and tritium in nickel</div>
+        <div class="source-meta">
+          <span>Wimmer, E., Wolf, W., Sticht, J., Saxe, P., Geller, C.B., Najafabadi, R., Young, G.A. (2008)</span>
+          <span>Physical Review B</span>
+          
+          <span><a href="https://doi.org/10.1103/physrevb.77.134305" target="_blank">DOI: 10.1103/physrevb.77.134305</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1103/physrevb.77.134305" target="_blank" class="access-link">https://doi.org/10.1103/physrevb.77.134305</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1103/physrevb.77.134305" target="_blank" class="access-link">https://doi.org/10.1103/physrevb.77.134305</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0005</div>
+        <div class="source-title">First-principles investigation of hydrogen trapping and diffusion at grain boundaries in nickel</div>
+        <div class="source-meta">
+          <span>Di Stefano, D., Mrovec, M., Elsässer, C. (2015)</span>
+          <span>Acta Materialia</span>
+          
+          <span><a href="https://doi.org/10.1016/j.actamat.2015.07.031" target="_blank">DOI: 10.1016/j.actamat.2015.07.031</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L06</span>
+    
+    <span class="layer-tag">LAYER_03 格子欠陥</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.actamat.2015.07.031" target="_blank" class="access-link">https://doi.org/10.1016/j.actamat.2015.07.031</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.actamat.2015.07.031" target="_blank" class="access-link">https://doi.org/10.1016/j.actamat.2015.07.031</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0006</div>
+        <div class="source-title">Hydrogen trapping at divacancies and impurity-vacancy complexes in nickel: First principles study</div>
+        <div class="source-meta">
+          <span>Subashiev, A.V., Nee, H.H. (2017)</span>
+          <span>Journal of Nuclear Materials</span>
+          
+          <span><a href="https://doi.org/10.1016/j.jnucmat.2017.01.037" target="_blank">DOI: 10.1016/j.jnucmat.2017.01.037</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L06</span>
+    
+    <span class="layer-tag">LAYER_03 格子欠陥</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.jnucmat.2017.01.037" target="_blank" class="access-link">https://doi.org/10.1016/j.jnucmat.2017.01.037</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.jnucmat.2017.01.037" target="_blank" class="access-link">https://doi.org/10.1016/j.jnucmat.2017.01.037</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0007</div>
+        <div class="source-title">Grain boundary segregation, stress and stretch: Effects on hydrogen absorption in nanocrystalline palladium</div>
+        <div class="source-meta">
+          <span>Lemier, C., Weissmuller, J. (2007)</span>
+          <span>Acta Materialia</span>
+          
+          <span><a href="https://doi.org/10.1016/j.actamat.2006.09.030" target="_blank">DOI: 10.1016/j.actamat.2006.09.030</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L06</span>
+    
+    <span class="layer-tag">LAYER_03 格子欠陥</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.actamat.2006.09.030" target="_blank" class="access-link">https://doi.org/10.1016/j.actamat.2006.09.030</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.actamat.2006.09.030" target="_blank" class="access-link">https://doi.org/10.1016/j.actamat.2006.09.030</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0008</div>
+        <div class="source-title">Ab initio computations of one and two hydrogen or deuterium atoms in the palladium tetrahedral site</div>
+        <div class="source-meta">
+          <span>Muguet, F.F., Bassez-Muguet, P.M. (1990)</span>
+          <span>Journal of Fusion Energy</span>
+          
+          <span><a href="https://doi.org/10.1007/bf01588267" target="_blank">DOI: 10.1007/bf01588267</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1007/bf01588267" target="_blank" class="access-link">https://doi.org/10.1007/bf01588267</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1007/bf01588267" target="_blank" class="access-link">https://doi.org/10.1007/bf01588267</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_OLD_METHODS_CAUTION</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0009</div>
+        <div class="source-title">Effect of temperature on fast hydrogen diffusion in iron: A path-integral quantum dynamics approach</div>
+        <div class="source-meta">
+          <span>Kimizuka, H., Mori, H., Ogata, S. (2011)</span>
+          <span>Physical Review B</span>
+          
+          <span><a href="https://doi.org/10.1103/physrevb.83.094110" target="_blank">DOI: 10.1103/physrevb.83.094110</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L11</span>
+    
+    <span class="layer-tag">L05</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1103/physrevb.83.094110" target="_blank" class="access-link">https://doi.org/10.1103/physrevb.83.094110</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1103/physrevb.83.094110" target="_blank" class="access-link">https://doi.org/10.1103/physrevb.83.094110</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0010</div>
+        <div class="source-title">Search for cold fusion in palladium-deuterium and titanium-deuterium</div>
+        <div class="source-meta">
+          <span>Badurek, G., Rauch, H., Seidl, E. (1989)</span>
+          <span>Kerntechnik</span>
+          
+          <span><a href="https://doi.org/10.1515/kern-1989-540317" target="_blank">DOI: 10.1515/kern-1989-540317</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L11</span>
+    
+    <span class="layer-tag">LAYER_11 代替説明</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1515/kern-1989-540317" target="_blank" class="access-link">https://doi.org/10.1515/kern-1989-540317</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1515/kern-1989-540317" target="_blank" class="access-link">https://doi.org/10.1515/kern-1989-540317</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_OLD_EXPERIMENT</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0011</div>
+        <div class="source-title">Atomic simulations of the behavior of hydrogen in copper-nickel-aluminum alloys</div>
+        <div class="source-meta">
+          <span>Wei, M., Zhang, P., Li, G., Ji, H., Wang, G., Wang, Y. (2024)</span>
+          <span>International Journal of Hydrogen Energy</span>
+          
+          <span><a href="https://doi.org/10.1016/j.ijhydene.2024.10.171" target="_blank">DOI: 10.1016/j.ijhydene.2024.10.171</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L03</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.ijhydene.2024.10.171" target="_blank" class="access-link">https://doi.org/10.1016/j.ijhydene.2024.10.171</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.ijhydene.2024.10.171" target="_blank" class="access-link">https://doi.org/10.1016/j.ijhydene.2024.10.171</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0012</div>
+        <div class="source-title">Diffusion of interstitial species (H and O atoms) in fcc systems (Al, Cu, Co, Ni and Pd): Contribution of first and second order transition states</div>
+        <div class="source-meta">
+          <span>Connétable, D., David, M. (2019)</span>
+          <span>Journal of Alloys and Compounds</span>
+          
+          <span><a href="https://doi.org/10.1016/j.jallcom.2018.09.042" target="_blank">DOI: 10.1016/j.jallcom.2018.09.042</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L03</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2018.09.042" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2018.09.042</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.jallcom.2018.09.042" target="_blank" class="access-link">https://doi.org/10.1016/j.jallcom.2018.09.042</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0013</div>
+        <div class="source-title">First-principles-based kinetic Monte Carlo studies of diffusion of hydrogen in Ni–Al and Ni–Fe binary alloys</div>
+        <div class="source-meta">
+          <span>Tafen, D.N. (2015)</span>
+          <span>Journal of Materials Science</span>
+          
+          <span><a href="https://doi.org/10.1007/s10853-015-8885-4" target="_blank">DOI: 10.1007/s10853-015-8885-4</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L03</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1007/s10853-015-8885-4" target="_blank" class="access-link">https://doi.org/10.1007/s10853-015-8885-4</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1007/s10853-015-8885-4" target="_blank" class="access-link">https://doi.org/10.1007/s10853-015-8885-4</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L2" data-reliability="L2" data-status="">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0014</div>
+        <div class="source-title">Dynamics and kinetics of subsurface absorption and desorption for the system hydrogen (deuterium)–Ni(111)</div>
+        <div class="source-meta">
+          <span>Premm, H., Pölzl, H., Winkler, A. (1998)</span>
+          <span>Surface Science</span>
+          
+          <span><a href="https://doi.org/10.1016/s0039-6028(98)00092-2" target="_blank">DOI: 10.1016/s0039-6028(98)00092-2</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L2">L2</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L04</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/s0039-6028(98)00092-2" target="_blank" class="access-link">https://doi.org/10.1016/s0039-6028(98)00092-2</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/s0039-6028(98)00092-2" target="_blank" class="access-link">https://doi.org/10.1016/s0039-6028(98)00092-2</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_OLD_EXPERIMENT</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_SURFACE_NOT_BULK</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0015</div>
+        <div class="source-title">The contribution of Cr and Ni to hydrogen absorption energy in Fe-Cr-Ni austenitic systems: A first-principles study</div>
+        <div class="source-meta">
+          <span>Moriyama, J., Takakuwa, O., Yamaguchi, M., Ogawa, Y., Tsuzaki, K. (2024)</span>
+          <span>Computational Materials Science</span>
+          
+          <span><a href="https://doi.org/10.1016/j.commatsci.2023.112650" target="_blank">DOI: 10.1016/j.commatsci.2023.112650</a></span>
+          
+          
+          <span>取得: 2026-05-11</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L03</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1016/j.commatsci.2023.112650" target="_blank" class="access-link">https://doi.org/10.1016/j.commatsci.2023.112650</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1016/j.commatsci.2023.112650" target="_blank" class="access-link">https://doi.org/10.1016/j.commatsci.2023.112650</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0016</div>
+        <div class="source-title">Hydrogen/deuterium adsorption and absorption properties on and in palladium using a combined plane wave and localized basis set method</div>
+        <div class="source-meta">
+          <span>Sakagami, M. et al. (2020)</span>
+          <span>International Journal of Quantum Chemistry</span>
+          
+          <span>DOI (proposed): 10.1002/qua.26275</span>
+          
+          
+          <span>取得: 2026-05-12</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-pending">DOI要確認 — human_review_log.csv に doi_confirmed を記入</span>
+      <span class="access-text">DOI未確認: 10.1002/qua.26275</span>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/qua.26275" target="_blank" class="access-link">https://onlinelibrary.wiley.com/doi/abs/10.1002/qua.26275</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_UNVERIFIED</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0017</div>
+        <div class="source-title">Adsorption and Absorption Energies of Hydrogen with Palladium</div>
+        <div class="source-meta">
+          <span>Schwarzer, M., Hertl, N., Nitz, F., Borodin, D., Fingerhut, J., Kitsopoulos, T.N. (2022)</span>
+          <span>Journal of Physical Chemistry C</span>
+          
+          <span>DOI (proposed): 10.1021/acs.jpcc.2c04567</span>
+          
+          
+          <span>取得: 2026-05-12</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-pending">DOI要確認 — human_review_log.csv に doi_confirmed を記入</span>
+      <span class="access-text">DOI未確認: 10.1021/acs.jpcc.2c04567</span>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://pubs.acs.org/doi/10.1021/acs.jpcc.2c04567" target="_blank" class="access-link">https://pubs.acs.org/doi/10.1021/acs.jpcc.2c04567</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_EXPERIMENTAL_NOT_DFT</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0018</div>
+        <div class="source-title">Density functional theory study of formation and diffusion of hydrogen, deuterium, and tritium in Pd-V intermetallic compounds</div>
+        <div class="source-meta">
+          <span>Unknown (2022)</span>
+          <span>Computational Materials Science</span>
+          
+          
+          <span>取得: 2026-05-12</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://www.sciencedirect.com/science/article/abs/pii/S0927025622006875" target="_blank" class="access-link">https://www.sciencedirect.com/science/article/abs/pii/S0927025622006875</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_UNVERIFIED</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0019</div>
+        <div class="source-title">Effect of Ni/Fe/Al on hydrogen behavior in copper grain boundaries: Solution, diffusion and trapping mechanism</div>
+        <div class="source-meta">
+          <span>Unknown (2025)</span>
+          <span>International Journal of Hydrogen Energy</span>
+          
+          
+          <span>取得: 2026-05-12</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L06</span>
+    
+    <span class="layer-tag">L05</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://www.sciencedirect.com/science/article/abs/pii/S0360319925037267" target="_blank" class="access-link">https://www.sciencedirect.com/science/article/abs/pii/S0360319925037267</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_UNVERIFIED</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0020</div>
+        <div class="source-title">First-principles investigation of the trapping mechanism of hydrogen in copper alloys from surface to vacancy</div>
+        <div class="source-meta">
+          <span>Unknown (2025)</span>
+          <span>International Journal of Hydrogen Energy</span>
+          
+          
+          <span>取得: 2026-05-12</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L06</span>
+    
+    <span class="layer-tag">L05</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://www.sciencedirect.com/science/article/abs/pii/S0360319925024279" target="_blank" class="access-link">https://www.sciencedirect.com/science/article/abs/pii/S0360319925024279</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_UNVERIFIED</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_MATERIAL_MISMATCH</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0021</div>
+        <div class="source-title">First-principles investigation of quantum mechanical effects on the diffusion of hydrogen in iron and nickel</div>
+        <div class="source-meta">
+          <span>Di Stefano, D., Mrovec, M., Elsässer, C. (2015)</span>
+          <span>Physical Review B</span>
+          
+          <span><a href="https://doi.org/10.1103/PhysRevB.92.224301" target="_blank">DOI: 10.1103/PhysRevB.92.224301</a></span>
+          
+          
+          <span>取得: 2026-05-13</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-hypothesis">H0</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">L11</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1103/PhysRevB.92.224301" target="_blank" class="access-link">https://doi.org/10.1103/PhysRevB.92.224301</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1103/PhysRevB.92.224301" target="_blank" class="access-link">https://doi.org/10.1103/PhysRevB.92.224301</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-local-label">ローカルPDF保存済</span>
+      <a href="file:///Users/dyuh1/Documents/solid-state-fusion-literature-harness/sources/raw/pdf/S0021_main.pdf" class="access-link">sources/raw/pdf/S0021_main.pdf</a>
+    </div>
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+  <div class="content-section section-original">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">原文引用</span>
+    </div>
+    <div class="original-quote">H atoms migrate between the most stable octahedral interstitial sites (O-sites) through metastable tetrahedral sites (T-sites). Consequently, the MEP consists of two jumps, one from the initial O-site to a neighboring T-site and another from this T-site to the final O-site.</div>
+    
+    <div class="page-ref">Sec. III.B</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+  <div class="content-section">
+    <details>
+      <summary>Claims (9件)</summary>
+      <div class="claim-table-wrapper">
+      <table class="claim-table">
+        <thead>
+          <tr>
+            <th>Claim ID</th><th>ページ</th><th>主張</th>
+            <th>種別</th><th>Support</th><th>仮説依存</th><th>確認状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><span class="claim-id">C0001</span></td>
+            <td>Sec. III.B</td>
+            <td>fcc Ni中のH最安定サイトは八面体サイト（O-site）であり、拡散はO-site→T-site（メタ安定）→O-siteの2ステップ最小エネルギー経路（MEP）を経由する。H atoms migrate between the most stable octahedral interstitial sites (O-sites) through metastable tetrahedral sites (T-sites).</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0002</span></td>
+            <td>Sec. III.B, Table II</td>
+            <td>fcc Ni中のH拡散律速ステップの古典障壁エネルギーΔE₀(O→T)=0.37 eV、T→O障壁ΔE₀(T→O)=0.10 eV（DFT GGA + CI-NEB計算）。O→T障壁が支配的。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0003</span></td>
+            <td>Sec. III.B, Table II</td>
+            <td>fcc NiのH拡散有効ジャンプ距離（O-O間、⟨110⟩方向）はa/√2≈2.50 Å（格子定数a=3.54 Å for Ni₃₂H超格子。純Niはa=3.53 Å）。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0004</span></td>
+            <td>Sec. IV Discussion; Fig. 2</td>
+            <td>fcc Ni中のH拡散において量子効果（ZPE・量子トンネリング）は全温度範囲でアレニウス的挙動を変えない。古典遷移状態理論（ZPE補正済み）がNi-H拡散係数計算に十分である。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0005</span></td>
+            <td>Sec. IV Discussion</td>
+            <td>fcc NiではZPE補正が有効拡散障壁を増大させる（拡散係数が小さくなる方向）。これはbcc Fe（ZPEが障壁を低下）とは逆の効果。また量子トンネリングもfcc Niでは無視できる。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0006</span></td>
+            <td>Sec. IV Discussion</td>
+            <td>fcc Ni中のHトンネリング効果は無視できる。理由: ①O→T障壁0.37 eVはFe T→T障壁0.090 eVより約4倍高い。②O-O間距離はFe T-T間距離より約2倍大きい。③FSモデルのトンネリング行列要素ppはFeの0.0022 eVに対しNiでは≪0に評価。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0007</span></td>
+            <td>Sec. IV; Fig. 2</td>
+            <td>fcc NiのH拡散係数（計算値）は実験値（Ref.53）と良く一致する。古典TST・ZPE補正済み古典TST・FS量子モデルの3つが同等の精度を示す（Fig.2）。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-B">B</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0008</span></td>
+            <td>Abstract; Sec. IV</td>
+            <td>量子核効果（QME）はbcc Feの正確なH拡散記述に不可欠だが、fcc Niでは less crucial（重要性が低い）。同じ第一原理手法を用いた直接比較で確認された。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-A">A</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+          <tr>
+            <td><span class="claim-id">C0009</span></td>
+            <td>Sec. III.B; Table II</td>
+            <td>Table II（fcc Ni H）数値: ΔE₀(O→T)=0.37 eV、振動エネルギーh̄ω（O-site 3重縮退・T-site・鞍点）、一致エネルギーε=0.0015 eV、トンネリング行列要素pp≈0。テキスト抽出で確認された値; h̄ω詳細は図版由来の可能性のため要人間確認。</td>
+            <td style="font-size:0.72rem">computational_result</td>
+            <td><span class="support-badge support-B">B</span></td>
+            <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+            <td style="font-size:0.72rem;color:var(--accent-yellow)">
+              unchecked
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
+      </div>
+    </details>
+  </div>
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0022</div>
+        <div class="source-title">Faradaic Efficiencies Less Than 100% during Electrolysis of Water Can Account for Reports of Excess Heat in 'Cold Fusion' Cells</div>
+        <div class="source-meta">
+          <span>Jones, J.E., Hansen, L.D., Jones, S.E., Shelton, D.S., Thorne, J.M. (1995)</span>
+          <span>The Journal of Physical Chemistry</span>
+          
+          <span><a href="https://doi.org/10.1021/j100018a033" target="_blank">DOI: 10.1021/j100018a033</a></span>
+          
+          
+          <span>取得: 2026-05-13</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L11</span>
+    
+    <span class="layer-tag">LAYER_11 代替説明</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1021/j100018a033" target="_blank" class="access-link">https://doi.org/10.1021/j100018a033</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1021/j100018a033" target="_blank" class="access-link">https://doi.org/10.1021/j100018a033</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0023</div>
+        <div class="source-title">Predictive evaluation of hydrogen diffusion coefficient on Pd(111) surface by path integral simulations using neural network potential</div>
+        <div class="source-meta">
+          <span>Kataoka, Y., Haruyama, J., Sugino, O., Shiga, M. (2024)</span>
+          <span>Physical Review Research</span>
+          
+          <span><a href="https://doi.org/10.1103/PhysRevResearch.6.043224" target="_blank">DOI: 10.1103/PhysRevResearch.6.043224</a></span>
+          
+          
+          <span>取得: 2026-05-13</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1103/PhysRevResearch.6.043224" target="_blank" class="access-link">https://doi.org/10.1103/PhysRevResearch.6.043224</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1103/PhysRevResearch.6.043224" target="_blank" class="access-link">https://doi.org/10.1103/PhysRevResearch.6.043224</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AUTHOR_SELF_CITATION_HEAVY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0024</div>
+        <div class="source-title">An Assessment of Claims of Excess Heat in Cold Fusion Calorimetry</div>
+        <div class="source-meta">
+          <span>Jones, S.E., Hansen, L.D., Shelton, D.S. (1998)</span>
+          <span>The Journal of Physical Chemistry B</span>
+          
+          <span><a href="https://doi.org/10.1021/jp962038x" target="_blank">DOI: 10.1021/jp962038x</a></span>
+          
+          
+          <span>取得: 2026-05-13</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L11</span>
+    
+    <span class="layer-tag">LAYER_11 代替説明</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1021/jp962038x" target="_blank" class="access-link">https://doi.org/10.1021/jp962038x</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1021/jp962038x" target="_blank" class="access-link">https://doi.org/10.1021/jp962038x</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+<div class="source-card reliability-L1" data-reliability="L1" data-status="pending">
+  <div class="card-header">
+    <div class="reliability-indicator"></div>
+    <div class="card-header-content">
+      <div class="card-title-area">
+        <div class="source-id">S0025</div>
+        <div class="source-title">Equilibrium Isotope Effect for Hydrogen Absorption in Palladium</div>
+        <div class="source-meta">
+          <span>Luo, W., Cowgill, D.F., Causey, R.A. (2009)</span>
+          <span>The Journal of Physical Chemistry C</span>
+          
+          <span><a href="https://doi.org/10.1021/jp905614x" target="_blank">DOI: 10.1021/jp905614x</a></span>
+          
+          
+          <span>取得: 2026-05-13</span>
+          
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-reliability badge-L1">L1</span>
+        
+        <span class="badge badge-status ">
+          未チェック
+        </span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="layer-labels">
+    
+    <span class="layer-tag">L05</span>
+    
+    <span class="layer-tag">LAYER_02 水素吸蔵</span>
+    
+  </div>
+  
+
+  <!-- ACCESS INFO SECTION -->
+  <div class="access-section">
+    
+    <div class="access-item">
+      <span class="access-label access-confirmed">DOI確認済 — クリックでアクセス</span>
+      <a href="https://doi.org/10.1021/jp905614x" target="_blank" class="access-link">https://doi.org/10.1021/jp905614x</a>
+    </div>
+    
+
+    
+    <div class="access-item">
+      <span class="access-label access-url-label">URL確認済</span>
+      <a href="https://doi.org/10.1021/jp905614x" target="_blank" class="access-link">https://doi.org/10.1021/jp905614x</a>
+    </div>
+    
+
+    
+
+    
+  </div>
+
+  
+  <div class="flags-section">
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_AI_SUMMARY_ONLY</div>
+    
+    <div class="flag-item"><span class="flag-icon">⚑</span> FLAG_EXPERIMENTAL_NOT_DFT</div>
+    
+  </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div class="content-section section-human">
+    <div class="section-indicator">
+      <div class="section-dot"></div>
+      <span class="section-name">人間レビュー</span>
+    </div>
+    
+    <div style="font-size:0.8rem;color:var(--accent-red);margin-bottom:0.5rem;">
+      ⚠ FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE → 原文取得が先決。研究判断に使用不可。
+    </div>
+    
+    
+    <div class="review-actions">
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">ADOPT 採用</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">WATCH 保留</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">REJECT 棄却</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">RECHECK 要再確認</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">EXTRACT_MORE 追加抽出</button>
+      
+      <button class="review-action-btn "
+              onclick="this.classList.toggle('selected')">FIND_CRITICISM 反論探索</button>
+      
+    </div>
+  </div>
+</div>
+
+
+
+<!-- TODAY'S CLAIMS TABLE -->
+
+<div class="section-title" style="margin-top:2.5rem;">Claim Table — 本日の抽出結果</div>
+<div class="claim-table-wrapper">
+<table class="claim-table">
+  <thead>
+    <tr>
+      <th>Claim ID</th><th>Source</th><th>ページ</th><th>主張</th>
+      <th>種別</th><th>Support</th><th>仮説依存</th><th>レイヤー</th><th>人間確認</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    <tr>
+      <td><span class="claim-id">C0001</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. III.B</td>
+      <td>fcc Ni中のH最安定サイトは八面体サイト（O-site）であり、拡散はO-site→T-site（メタ安定）→O-siteの2ステップ最小エネルギー経路（MEP）を経由する。H atoms migrate between the most stable octahedral interstitial sites (O-sites) through metastable tetrahedral sites (T-sites).</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0002</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. III.B, Table II</td>
+      <td>fcc Ni中のH拡散律速ステップの古典障壁エネルギーΔE₀(O→T)=0.37 eV、T→O障壁ΔE₀(T→O)=0.10 eV（DFT GGA + CI-NEB計算）。O→T障壁が支配的。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0003</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. III.B, Table II</td>
+      <td>fcc NiのH拡散有効ジャンプ距離（O-O間、⟨110⟩方向）はa/√2≈2.50 Å（格子定数a=3.54 Å for Ni₃₂H超格子。純Niはa=3.53 Å）。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0004</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. IV Discussion; Fig. 2</td>
+      <td>fcc Ni中のH拡散において量子効果（ZPE・量子トンネリング）は全温度範囲でアレニウス的挙動を変えない。古典遷移状態理論（ZPE補正済み）がNi-H拡散係数計算に十分である。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0005</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. IV Discussion</td>
+      <td>fcc NiではZPE補正が有効拡散障壁を増大させる（拡散係数が小さくなる方向）。これはbcc Fe（ZPEが障壁を低下）とは逆の効果。また量子トンネリングもfcc Niでは無視できる。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0006</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. IV Discussion</td>
+      <td>fcc Ni中のHトンネリング効果は無視できる。理由: ①O→T障壁0.37 eVはFe T→T障壁0.090 eVより約4倍高い。②O-O間距離はFe T-T間距離より約2倍大きい。③FSモデルのトンネリング行列要素ppはFeの0.0022 eVに対しNiでは≪0に評価。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0007</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. IV; Fig. 2</td>
+      <td>fcc NiのH拡散係数（計算値）は実験値（Ref.53）と良く一致する。古典TST・ZPE補正済み古典TST・FS量子モデルの3つが同等の精度を示す（Fig.2）。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-B">B</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0008</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Abstract; Sec. IV</td>
+      <td>量子核効果（QME）はbcc Feの正確なH拡散記述に不可欠だが、fcc Niでは less crucial（重要性が低い）。同じ第一原理手法を用いた直接比較で確認された。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-A">A</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+    <tr>
+      <td><span class="claim-id">C0009</span></td>
+      <td><span class="claim-id">S0021</span></td>
+      <td>Sec. III.B; Table II</td>
+      <td>Table II（fcc Ni H）数値: ΔE₀(O→T)=0.37 eV、振動エネルギーh̄ω（O-site 3重縮退・T-site・鞍点）、一致エネルギーε=0.0015 eV、トンネリング行列要素pp≈0。テキスト抽出で確認された値; h̄ω詳細は図版由来の可能性のため要人間確認。</td>
+      <td style="font-size:0.72rem">computational_result</td>
+      <td><span class="support-badge support-B">B</span></td>
+      <td><span class="badge badge-hypothesis" style="font-size:0.6rem">H0</span></td>
+      <td style="font-size:0.7rem">LAYER_05</td>
+      <td style="font-size:0.72rem;color:var(--accent-yellow)">
+        unchecked
+      </td>
+    </tr>
+    
+  </tbody>
+</table>
+</div>
+
+
+<!-- ===== NETWORK DIAGRAM ===== -->
+
+<div class="network-section">
+  <div class="section-title" style="border:none;padding:0;margin-bottom:0.3rem;">
+    論文関係ネットワーク — S0009 / S0021 / S0001
+    <span class="dq11-badge">DQ0011 確定</span>
+  </div>
+  <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.6rem;">
+    S0021（Di Stefano 2015）の本文確認（DQ0012）とS0009比較評価（DQ0011）から導出。エッジ方向 = 影響・制約の方向。
+  </div>
+  <div class="network-svg-wrap">
+  <svg viewBox="0 0 960 370" width="100%" style="min-width:700px;max-width:960px;display:block;margin:auto;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      
+      <marker id="arr-constrains" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+        <polygon points="0 0, 9 3.5, 0 7" fill="#e04050"/>
+      </marker>
+      
+      <marker id="arr-supports" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+        <polygon points="0 0, 9 3.5, 0 7" fill="#3ad49a"/>
+      </marker>
+      
+      <marker id="arr-contrasts" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+        <polygon points="0 0, 9 3.5, 0 7" fill="#6a7080"/>
+      </marker>
+      
+      <marker id="arr-extracted_from" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+        <polygon points="0 0, 9 3.5, 0 7" fill="#40c8e0"/>
+      </marker>
+      
+    </defs>
+
+    <!-- Edges -->
+    
+    <line
+      x1="595" y1="134"
+      x2="689" y2="110"
+      stroke="#e04050"
+      stroke-width="2"
+      
+      marker-end="url(#arr-constrains)"
+      opacity="0.85"
+    />
+    <text
+      x="645" y="107"
+      text-anchor="middle"
+      class="net-edge-label"
+      fill="#e04050"
+      opacity="0.9"
+    >FLAG_MATERIAL_MISMATCH確定 → Fe-context-only</text>
+    
+    <line
+      x1="365" y1="134"
+      x2="271" y2="110"
+      stroke="#3ad49a"
+      stroke-width="2"
+      
+      marker-end="url(#arr-supports)"
+      opacity="0.85"
+    />
+    <text
+      x="315" y="107"
+      text-anchor="middle"
+      class="net-edge-label"
+      fill="#3ad49a"
+      opacity="0.9"
+    >fcc Ni 古典DFT有効性を支持</text>
+    
+    <line
+      x1="695" y1="108"
+      x2="603" y2="140"
+      stroke="#6a7080"
+      stroke-width="1.5"
+      stroke-dasharray="6,3"
+      marker-end="url(#arr-contrasts)"
+      opacity="0.85"
+    />
+    <text
+      x="646" y="135"
+      text-anchor="middle"
+      class="net-edge-label"
+      fill="#6a7080"
+      opacity="0.9"
+    >bcc Fe: QME必須（対比基準）</text>
+    
+    <line
+      x1="480" y1="270"
+      x2="480" y2="216"
+      stroke="#40c8e0"
+      stroke-width="1.5"
+      stroke-dasharray="6,3"
+      marker-end="url(#arr-extracted_from)"
+      opacity="0.85"
+    />
+    <text
+      x="480" y="226"
+      text-anchor="middle"
+      class="net-edge-label"
+      fill="#40c8e0"
+      opacity="0.9"
+    >DQ0012 抽出 (C0001–C0009)</text>
+    
+
+    <!-- Nodes -->
+    
+    <rect
+      x="365" y="120" width="230" height="90"
+      rx="6" ry="6"
+      class="net-node-primary_ni"
+      stroke-width="1.5"
+    />
+    <!-- source id -->
+    <text
+      x="480" y="143"
+      text-anchor="middle"
+      class="net-label-id"
+      fill="#3ad49a"
+    >S0021</text>
+    <!-- authors year -->
+    <text
+      x="480" y="159"
+      text-anchor="middle"
+      class="net-label-authors"
+    >Di Stefano 2015</text>
+    <!-- role text line 1 -->
+    <text
+      x="480" y="175"
+      text-anchor="middle"
+      class="net-label-role"
+      fill="var(--text)"
+      font-size="10"
+    >Fe+Ni DFT · QME less crucial for Ni</text>
+    
+    <!-- material badge -->
+    
+    <text
+      x="371" y="204"
+      class="net-label-authors"
+      font-size="9"
+      fill="var(--text-dim)"
+    >Fe;Ni</text>
+    
+    
+    <rect
+      x="695" y="43" width="210" height="75"
+      rx="6" ry="6"
+      class="net-node-fe_context_only"
+      stroke-width="1.5"
+    />
+    <!-- source id -->
+    <text
+      x="800" y="58"
+      text-anchor="middle"
+      class="net-label-id"
+      fill="#e07080"
+    >S0009</text>
+    <!-- authors year -->
+    <text
+      x="800" y="74"
+      text-anchor="middle"
+      class="net-label-authors"
+    >Kimizuka 2011</text>
+    <!-- role text line 1 -->
+    <text
+      x="800" y="90"
+      text-anchor="middle"
+      class="net-label-role"
+      fill="var(--text)"
+      font-size="10"
+    >Fe only · QME essential</text>
+    
+    <!-- material badge -->
+    
+    <text
+      x="701" y="112"
+      class="net-label-authors"
+      font-size="9"
+      fill="var(--text-dim)"
+    >Fe</text>
+    
+    
+    <rect
+      x="55" y="43" width="210" height="75"
+      rx="6" ry="6"
+      class="net-node-ni_dft_reference"
+      stroke-width="1.5"
+    />
+    <!-- source id -->
+    <text
+      x="160" y="58"
+      text-anchor="middle"
+      class="net-label-id"
+      fill="#6ab8ff"
+    >S0001</text>
+    <!-- authors year -->
+    <text
+      x="160" y="74"
+      text-anchor="middle"
+      class="net-label-authors"
+    >David 2020</text>
+    <!-- role text line 1 -->
+    <text
+      x="160" y="90"
+      text-anchor="middle"
+      class="net-label-role"
+      fill="var(--text)"
+      font-size="10"
+    >Ni H/C/N/O DFT · classical approach</text>
+    
+    <!-- material badge -->
+    
+    <text
+      x="61" y="112"
+      class="net-label-authors"
+      font-size="9"
+      fill="var(--text-dim)"
+    >Ni</text>
+    
+    
+    <rect
+      x="375" y="270" width="210" height="60"
+      rx="6" ry="6"
+      class="net-node-claims_cluster"
+      stroke-width="1.5"
+    />
+    <!-- source id -->
+    <text
+      x="480" y="278"
+      text-anchor="middle"
+      class="net-label-id"
+      fill="#40c8e0"
+    >C0001–C0009</text>
+    <!-- authors year -->
+    <text
+      x="480" y="294"
+      text-anchor="middle"
+      class="net-label-authors"
+    >Claims cluster</text>
+    <!-- role text line 1 -->
+    <text
+      x="480" y="310"
+      text-anchor="middle"
+      class="net-label-role"
+      fill="var(--text)"
+      font-size="10"
+    >Ni-H拡散 · 9件のClaims (DQ0012)</text>
+    
+    <!-- material badge -->
+    
+    
+  </svg>
+  </div>
+
+  <!-- Legend for edge types -->
+  <div style="display:flex;gap:1.8rem;flex-wrap:wrap;margin-top:0.8rem;font-size:0.74rem;">
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <svg width="28" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="22" y2="5" stroke="#e04050" stroke-width="2"/><polygon points="18,2 26,5 18,8" fill="#e04050"/></svg>
+      <span style="color:var(--text-dim)">constrains — スコープ制限・FLAG確定</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <svg width="28" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="22" y2="5" stroke="#3ad49a" stroke-width="2"/><polygon points="18,2 26,5 18,8" fill="#3ad49a"/></svg>
+      <span style="color:var(--text-dim)">supports — 方法論的正当性を支持</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <svg width="28" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="22" y2="5" stroke="#6a7080" stroke-width="1.5" stroke-dasharray="4,2"/><polygon points="18,2 26,5 18,8" fill="#6a7080"/></svg>
+      <span style="color:var(--text-dim)">contrasts — 対比参照（Fe側データ提供）</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <svg width="28" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="22" y2="5" stroke="#40c8e0" stroke-width="1.5" stroke-dasharray="4,2"/><polygon points="18,2 26,5 18,8" fill="#40c8e0"/></svg>
+      <span style="color:var(--text-dim)">extracted_from — DQ0012 PDF抽出</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FE VS NI COMPARISON ===== -->
+<div class="comparison-section">
+  <div class="section-title" style="border:none;padding:0;margin-bottom:0.3rem;">
+    Fe vs Ni — 量子核効果 直接比較
+    <span class="dq11-badge">S0021 本文確認済</span>
+  </div>
+  <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.4rem;">
+    Di Stefano et al. 2015 (PRB 92, 224301) の直接計算より。全数値は DQ0012 で PDF 本文から確認。
+  </div>
+  <div style="overflow-x:auto;">
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th style="width:22%">比較軸</th>
+        <th class="col-fe" style="width:38%">S0009 — bcc Fe (Kimizuka 2011)</th>
+        <th class="col-ni" style="width:38%">S0021 — fcc Ni (Di Stefano 2015)</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="col-dim">材料系</td>
+        <td class="col-fe">bcc Fe</td>
+        <td class="col-ni">fcc Ni</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">H安定サイト</td>
+        <td class="col-fe">T-site（四面体）</td>
+        <td class="col-ni">O-site（八面体）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">拡散MEP</td>
+        <td class="col-fe">T→T（1ステップ）</td>
+        <td class="col-ni">O→T→O（2ステップ）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">古典障壁 ΔE₀</td>
+        <td class="col-fe">0.090 eV</td>
+        <td class="col-ni">0.37 eV（O→T律速）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">量子核効果</td>
+        <td class="col-fe">必須（非アレニウス低温）</td>
+        <td class="col-ni">less crucial（全温度アレニウス）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">ZPE補正の符号</td>
+        <td class="col-fe">障壁を低下（拡散促進）</td>
+        <td class="col-ni">障壁を増大（拡散抑制）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">トンネリング pp</td>
+        <td class="col-fe">0.0022 eV（有意）</td>
+        <td class="col-ni">≈0（無視可）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">古典DFTの妥当性</td>
+        <td class="col-fe">不十分（過小評価の恐れ）</td>
+        <td class="col-ni">十分（S0021・C0004で確定）</td>
+      </tr>
+      
+      <tr>
+        <td class="col-dim">Ni-H計算適用可否</td>
+        <td class="col-fe">禁止（材料外挿）</td>
+        <td class="col-ni">直接適用可</td>
+      </tr>
+      
+    </tbody>
+  </table>
+  </div>
+  <div style="margin-top:0.8rem;font-size:0.76rem;color:var(--text-dim);line-height:1.7;border-top:1px solid var(--border);padding-top:0.6rem;">
+    <strong style="color:var(--accent-green);">研究上の含意（DQ0011確定）:</strong>
+    S0009 の Layer 11 スコープは <strong>Fe-DFT 批判に限定</strong>。
+    fcc Ni（本研究の陰極材料）への外挿は禁止。
+    S0021 は fcc Ni で古典 DFT が十分であることを直接示し、
+    S0001（David 2020）等の Ni-H 古典 DFT 計算を方法論的に正当化する。
+    <br>
+    <strong style="color:var(--accent-red);">使用禁止:</strong>
+    S0009 を「Ni-H 量子補正が必要な証拠」として引用すること。
+  </div>
+</div>
+
+
+<!-- NEXT ACTIONS -->
+
+<div class="next-actions">
+  <div class="section-title" style="border:none;padding:0;margin-bottom:0.8rem;">次アクション候補 — Claude提案</div>
+  
+  <div class="action-item">
+    <span class="action-priority priority-high">P1</span>
+    <div class="action-text">FLAG_AUTHOR_MISMATCH資料の著者最終確認。出版社サイト（ScienceDirect/Elsevier）でS0001(David 2020)・S0002(Setayandeh 2021)の著者名を直接確認し、CrossRef値との一致を検証する。一致確認後にsource_verified=trueを維持、不一致なら再修正。</div>
+  </div>
+  
+  <div class="action-item">
+    <span class="action-priority priority-medium">P2</span>
+    <div class="action-text">S0009(Kimizuka 2011 Fe/H)のDQ0001批判としての妥当性レビュー。Fe→Niの材料外挿が方法論的にどこまで正当化できるか評価。Ni系の量子核効果DFT論文が他に存在するか追加探索。クエリ: 'path integral hydrogen diffusion nickel quantum'</div>
+  </div>
+  
+  <div class="action-item">
+    <span class="action-priority priority-low">P3</span>
+    <div class="action-text">Layer 11資料2件の書誌情報精査。S0003(Shanahan 2002)とS0010(Badurek 1989)について実験手法・測定対象・陰性結果の種別をabstractから確認（PDF取得なし・abstract読み取りのみ可）。</div>
+  </div>
+  
+  <div class="action-item">
+    <span class="action-priority priority-medium">P2</span>
+    <div class="action-text">S0023(Kataoka 2024 PRR)のFLAG_AUTHOR_SELF_CITATION_HEAVYの誤検知判定を人間が確認する。check_duplicates.pyが「y.」「m.」という略名で3件/2024年を検出したが・フルネーム照合では既存著者との重複なし。人間確認後にフラグを削除するかどうかを判断する。</div>
+  </div>
+  
+</div>
+
+
+<!-- POLICY REMINDER -->
+<div class="policy-reminder">
+  <strong style="color:var(--accent-red);">⚠ 安全ポリシーリマインダー</strong><br>
+  • FLAG_AI_SUMMARY_ONLY または FLAG_NO_PAGE_REFERENCE がある資料は研究判断に使用不可<br>
+  • AI解釈欄の内容は原文に存在しない因果関係を含む可能性がある — 必ず原文で検証<br>
+  • 信憑性レベルの最終確定は人間のみが行う（ai_proposed_level → human_confirmed_level）<br>
+  • 原文の "suggests" / "may" / "could" は可能性表現として維持 — 断言に変換しない
+</div>
+
+</div><!-- /main -->
+
+<script>
+function filterCards(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.source-card').forEach(card => {
+    if (filter === 'all') { card.style.display = ''; return; }
+    if (['L5','L4','L3','L2','L1'].includes(filter)) {
+      card.style.display = card.dataset.reliability === filter ? '' : 'none';
+    } else if (filter === 'needs_review') {
+      card.style.display = card.dataset.status === 'needs_review' ? '' : 'none';
+    } else if (filter === 'flagged') {
+      card.style.display = card.querySelector('.flags-section') ? '' : 'none';
+    }
+  });
+}
+document.querySelectorAll('.review-action-btn').forEach(btn => {
+  btn.addEventListener('click', function() { this.classList.toggle('selected'); });
+});
+</script>
+
+</body>
+</html>
